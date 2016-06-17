@@ -1,6 +1,17 @@
 <html>
-    <p>Hi there!</p>
-    <p>It works!</p>
-	<p>You is a SB</p>
-	<p>To SB Hao</p>
+<head>
+	<title>My simple Blog</title>
+</head>
+<body>
+	<div>
+		<h1><a href="/">My simple Blog</a></h1>
+	</div>
+	{% for post in posts %}
+	<div>
+		<p>published:{{ post.published_date }}</p>
+			<h1><a href="">{{ post.title }}</a></h1>
+			<p>{{ post.text|linebreaks }}</p>
+	</div>
+	{% endfor %}
+</body>
 </html>
