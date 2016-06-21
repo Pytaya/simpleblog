@@ -2,6 +2,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post
 from .forms import PostForm
 from django.core.urlresolvers import reverse
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Count
+
 # Create your views here.
 
 def post_list(request):
@@ -33,3 +37,34 @@ def post_edit(request, pk):
     else:
         form = PostForm(instance=post)
     return render(request, 'blog/post_edit.html', {'form': form})
+def post_draft_list(request):
+        posts = Post.objects.filter(published_date__isnull=True).order_by('-created_date')
+        return render(request, 'blog/post_draft_list.html', {'posts': posts})
+
+def post_publish(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    post.publish()
+    return redirect('blog.views.post_detail', pk=pk)
+
+def post_remove(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    post.delete()
+    return redirect('blog.views.post_list')
+
+def post_list(request):
+    postsAll = Post.objects.annotate(num_comment=Count('published_date')).filter(
+        published_date__isnull=False).select_related(
+        'author').order_by('-published_date')
+#    for p in postsAll:
+#        p.click = cache_manager.get_click(p)
+    paginator = Paginator(postsAll, 2)  # Show 10 contacts per page
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        posts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        posts = paginator.page(paginator.num_pages)
+    return render(request, 'blog/post_list.html', {'posts': posts, 'page': True})
